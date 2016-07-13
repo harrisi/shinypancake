@@ -1,0 +1,36 @@
+Compiled from "Bar.java"
+class Bar {
+  public static final int x;
+
+  Bar();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static int bar(int);
+    Code:
+       0: iload_0
+       1: iconst_2
+       2: idiv
+       3: istore_1
+       4: iload_1
+       5: ireturn
+
+  public static int foo(int);
+    Code:
+       0: iload_0
+       1: iconst_2
+       2: imul
+       3: istore_1
+       4: iload_1
+       5: invokestatic  #2                  // Method bar:(I)I
+       8: ireturn
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: bipush        10
+       2: invokestatic  #4                  // Method foo:(I)I
+       5: istore_1
+       6: return
+}
