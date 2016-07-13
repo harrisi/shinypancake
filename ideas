@@ -1,0 +1,20 @@
+Java -> Python seems easier than Python -> Java.
+
+What I want is to read in bytecode files and convert them to bytecode in another
+format. Certainly this should be relatively straightforward. I'm assuming the
+compilers from source -> bytecode will have already finished dealing with the
+complex stuff. If I believe that the languages are computationally equivalent,
+then there should be no reason (that I am aware of) that a bytecode -> bytecode
+conversion wouldn't be possible.
+
+Java seems to be typed, whereas Python bytecode is not. Converting typed to
+untyped should be fine, and actually might mean the resulting Python bytecode
+could be provable type safe. Converting from Python to Java bytecode would be
+more difficult, since there would need to be some type inference of the Python
+bytecode. That sounds like some magic voodoo to me.
+
+It might be optimal to create an intermediate bytecode representation that could
+be used as a target from and to various other languages bytecodes. This would
+optimally allow for arbitrary bytecode -> bytecode conversions, meaning one
+could write a program in Java and have it run in YARV or whatever.
+

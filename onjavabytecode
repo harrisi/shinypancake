@@ -1,0 +1,318 @@
+alias u1 = one-(8-bit-)byte;
+alias u2 = two-(8-bit-)bytes;
+alias u4 = four-(8-bit-)bytes;
+
+ClassFile {
+  u4  magic; // magic numbers to identify a .class file (0xCAFEBABE)
+  u2  minor_version; // java spec conforming?
+  u2  major_version;  // "                 "
+  u2  constant_pool_count; // what is this? (index for bounds protection)
+  cp_info constant_pool[constant_pool_count - 1]; // what is this?
+// The constant pool holds constant data for the class, like strings, class and
+// interface names, field names, and other constants referred to within the
+// class file. (Does this mean there's dead code elimination by this step?)
+  u2  access_flags; // ?
+  u2  this_class; // class itself?
+  u2  super_class; // parent class?
+  u2  interfaces_count; // items
+  u2  interfaces[interfaces_count]; // list of inherited interfaces?
+  u2  fields_count; // items
+  field_info  fields[fields_count]; // no idea
+  u2  methods_count; // items
+  method_info methods[methods_count]; // class methods
+  u2  attributes_count; // items
+  attribute_info  attributes[attributes_count]; // no idea
+}
+
+cp_info {
+  u1 tag;
+  u1 info[];
+}
+
+CONSTANT_Class_info {
+  u1 tag;
+  u2 name_index;
+}
+
+CONSTANT_Fieldref_info {
+  u1 tag;
+  u2 class_index;
+  u2 name_and_type_index;
+}
+
+CONSTANT_Methodref_info {
+  u1 tag;
+  u2 class_index;
+  u2 name_and_type_index;
+}
+
+CONSTANT_String_info {
+  u1 tag;
+  u2 string_index;
+}
+
+CONSTANT_NameAndType_info {
+  u1 tag;
+  u2 name_index;
+  u2 descriptor_index;
+}
+
+CONSTANT_Utf8_info {
+  u1 tag;
+  u2 length;
+  u1 bytes[length];
+}
+
+field_info {
+  u2 access_flags;
+  u2 name_index;
+  u2 descriptor_index;
+  u2 attributes_count;
+  attributes_info attributes[attributes_count];
+}
+
+attribute_info {
+  u2 attribute_name_index;
+  u4 attribute_length;
+  u1 info[attribute_length];
+}
+
+Code_attribute {
+  u2 attribute_name_index;
+  u4 attribute_length;
+  u2 max_stack;
+  u2 max_locals;
+  u4 code_length;
+  u1 code[code_length];
+  u2 exception_table_length;
+  { u2 start_pc;
+    u2 end_pc;
+    u2 handler_pc;
+    u2 catch_type;
+  } exception_table[exception_table_length];
+  u2 attributes_count;
+  attribute_info attributes[attributes_count];
+}
+
+LineNumberTable_attribute {
+  u2 attribute_name_index;
+  u4 attribute_length;
+  u2 line_number_table_length;
+  { u2 start_pc;
+    u2 line_number;
+  } line_number_table[line_number_table_length];
+}
+
+(magic) 0xCAFEBABE
+(minor_version) 0x0000 (0): minor class version format
+(major_version) 0x0034 (52): major class version format
+(constant_pool_count) 0x001D (29): len(constant_pool)
+
+(constant_pool[])
+  (tag) 0x0A (10): CONSTANT_Methodref
+  (class_index) 0x0006: CP[6] (index might be off?) must be CONSTANT_Class_info
+  (name_and_type_index) 0x000F: CP[15]  must be CONSTANT_NameAndType_info
+
+  (tag) 0x09 (9): CONSTANT_Fieldref
+  (class_index) 0x0010 (16): CP[16] must be CONSTANT_Class_info (class/interf.)
+  (name_and_type_index) 0x0011 (17): CP[17] must be CONSTANT_NameAndType_info
+
+  (tag) 0x08 (8): CONSTANT_String
+  (string_index) 0x0012 (18): CP[18] must be CONSTANT_Utf8_info
+
+  (tag) 0x0A (10): CONSTANT_Methodref
+  (class_index) 0x0013 (19): CP[19] must be CONSTANT_Class_info
+  (name_and_type_index) 0x0014 (20): CP[20] must be CONSTANT_NameAndType_info
+
+  (tag) 0x07 (7): CONSTANT_Class
+  (name_index) 0x0015 (21): CP[21] must be CONSTANT_Utf8_info
+
+  (tag) 0x07 (7): CONSTANT_Class
+  (name_index) 0x0016 (22): CP[22] must be CONSTANT_Utf8_info
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0006 (6): number of bytes in bytes array (not string length!)
+  (bytes) 0x3C 69 6E 69 74 3E: "<init>" (special: §2.9)
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0003 (3): number of bytes in bytes array
+  (bytes) 0x28 29 56: "()V"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0004 (4): number of bytes in bytes array
+  (bytes) 0x43 6F 64 65: "Code" (is this the ".data:" section?)
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x000F (15): number of bytes in bytes array
+  (bytes) 0x4C 69 6E 65 4E 75 6D 62 65 72 54 61 62 6C 65: "LineNumberTable"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0004 (4): len(bytes)
+  (bytes) 0x6D 61 69 6E: "main"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0016 (22): len(bytes)
+  (bytes) 0x28 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 56:
+          "([Ljava/lang/String;)V"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x000A (10): len(bytes)
+  (bytes) 0x53 6F 75 72 63 65 46 69 6C 65: "SourceFile"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0008 (8): len(bytes)
+  (bytes) 0x66 6F 6F 2E 6A 61 76 61: "foo.java"
+
+  (tag) 0x0C (12): CONSTANT_NameAndType
+  (name_index) 0x0007 (7): CP[7] must be CONSTANT_Utf8_info representing field
+                           or method (or special "<init>")
+  (descriptor_index) 0x0008 (8): CP[8] must be CONSTANT_Utf8_info representing
+                     valid field or method descriptor
+
+  (tag) 0x07 (7): CONSTANT_Class
+  (name_index) 0x0017 (23): CP[23] must be CONSTANT_Utf8_info (enc. intrnl form)
+
+  (tag) 0x0C (12): CONSTANT_NameAndType
+  (name_index) 0x0018 (24): CP[24] must be CONSTANT_Utf8_info repr. field/method
+  (descriptor_index) 0x0019 (25): CP[25] must be CONSTANT_Utf8_info repr. desc.
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x000C (12): len(bytes)
+  (bytes) 0x48 65 6C 6C 6F 20 77 6F 72 6C 64 21: "Hello world!"
+
+  (tag) 0x07 (7): CONSTANT_Class
+  (name_index) 0x001A (26): CP[26] must be CONSTANT_Utf8_info (enc. intrnl form)
+
+  (tag) 0x0C (12): CONSTANT_NameAndType
+  (name_index) 0x001B (27): CP[27] must be CONSTANT_Utf8_info repr. field/method
+  (descriptor_index) 0x001C (28): CP[28] must be CONSTANT_Utf8_info repr. desc.
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0003 (3): len(bytes)
+  (bytes) 0x46 6F 6F: "Foo"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0010 (16): len(bytes)
+  (bytes) 0x6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74: "java/lang/Object"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0010 (16): len(bytes)
+  (bytes) 0x6A 61 76 61 2F 6C 61 6E 67 2F 53 79 73 74 65 6D: "java/lang/System"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0003 (3): len(bytes)
+  (bytes) 0x6F 75 74: "out"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0015 (21): len(bytes)
+  (bytes) 0x4C 6A 61 76 61 2F 69 6F 2F 50 72 69 6E 74 53 74 72 65 61 6D 3B:
+          "Ljava/io/PrintStream;"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0013 (19): len(bytes)
+  (bytes) 0x6A 61 76 61 2F 69 6F 2F 50 72 69 6E 74 53 74 72 65 61 6D:
+          "java/io/PrintStream"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0007 (7): len(bytes)
+  (bytes) 0x70 72 69 6E 74 6C 6E: "println"
+
+  (tag) 0x01 (1): CONSTANT_Utf8
+  (length) 0x0015 (21): len(bytes)
+  (bytes) 0x28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 56:
+          "(Ljava/lang/String;)V"
+
+// END OF CONSTANT POOL
+
+(access_flags) 0x0020 (32): ACC_SUPER
+
+(this_class) 0x0005 (5): CP[5] must be CONSTANT_Class_info representing .this
+
+(super_class) 0x0006 (6): CP[6] must be CONSTANT_Class_info representing super
+
+(interfaces_count) 0x0000 (0): number of direct superinterfaces of class/interf.
+
+(interfaces[]) (empty): array of CP[i]; must be CONSTANT_Class_info
+
+(fields_count) 0x0000 (0): number of field_info structs in fields table
+
+(fields[]) (empty): each item describes field in class or interface
+
+(methods_count) 0x0001 (1): len(methods)
+
+(methods[]) 0x00 00 00 07 00 08 00 01:
+  (access_flags) 0x0000: Mask denotes access permissions
+  (name_index) 0x0007 (7): CP[7] must be CONSTANT_Utf8_info representing valid
+                           unqualified name denoting a field
+  (descriptor_index) 0x0008 (8): CP[8] must be CONSTANT_Utf8_info representing
+                                 valid field descriptor
+  (attributes_count) 0x0001 (1): # of additional attributes of this field
+  (attributes[]) 0x00 09 00 00 00 1D ..:
+    (attribute_name_index) 0x0009 (9): CP[9] must be CONSTANT_Utf8_info
+                                       representing name of attribute
+    // N.B.: I just realized this ^ is how the attribute is actually specified.
+    (attribute_length) 0x00 00 00 1D (29): len(attribute) (excl. prev. 6 bytes)
+    //(info[]) ("Code"):
+    //  (attribute_name_index) 0x0001 (1): CP[1] 
+    (max_stack) 0x0001 (1): max depth of operand stack during method execution
+    (max_locals) 0x0001 (1): # of local variables in local variable array
+    (code_length) 0x00 00 00 05 (5): len(code) for this method
+    (code[]) 0x2A B7 00 01 B1:
+      0x2A: aload_0
+      0xB7: invokespecial 0x0001
+      // 0x00: nop
+      // 0x01: aconst_null
+      0xB1: return
+    (exception_table_length) 0x0000 (0): len(exception_table)
+    (exception_table[]) (empty)
+    (attributes_count) 0x0001 (1): len(attributes)
+    (attributes[]) 0x00 0A 00 00 00 06 00 01 00 00 00 01:
+      (attribute_name_index) 0x000A (10): CP[10] must be CONSTANT_Utf8_info
+                                           representing name of attribute
+      (attribute_length) 0x00 00 00 06 (6): len(attribute) (excl. prev. 6 bytes)
+      (line_number_table_length) 0x0001 (1): len(line_number_table)
+      (line_number_table[]) 0x00 00 00 01:
+        (start_pc) 0x0000 (0): indicates index into code array where new line in
+                               the original source file begins.
+        (line_number) 0x0001 (1): line number of original source file
+  (access_flags) 0x0009 (9): ACC_PUBLIC & ACC_STATIC
+  (name_index) 0x000B (11): CP[11] must be CONSTANT_Utf8_info representing valid
+                            unqualified name denoting a field
+  (descriptor_index) 0x000C (12): CP[12] must be CONSTANT_Utf8_info representing
+                                  valid field descriptor
+  (attributes_count) 0x0001 (1): # of additional attributes of this field
+  (attributes[]) 0x00 09 00 00 00 25 ..:
+    (attribute_name_index) 0x0009 (9): CP[9] must be CONSTANT_Utf8_info
+                                       representing name of attribute
+    (attribute_length) 0x00 00 00 25 (37): len(attribute) (excl. prev. 6 bytes)
+    (max_stack) 0x0002 (2): max depth of operand stack during method execution
+    (max_locals) 0x0001 (1): # of local variables in local variable array
+    (code_length) 0x00 00 00 09 (9): len(code) for this method
+    (code[]) 0xB2 00 02 12 03 B6 00 04 B1:
+      0xB2: getstatic 0x0002
+      0x12: ldc 0x03
+      0xB6: invokevirtual 0x0004
+      0xB1: return
+    (exception_table_length) 0x0000 (0): len(exception_table)
+    (exception_table[]) (empty)
+    (attributes_count) 0x0001 (1): len(attributes)
+    (attributes[]) 0x00 0A 00 00 00 0A 00 02 00 00 00 03 00 08 00 04:
+      (attributes_name_index) 0x000A (10): CP[10] must be CONSTANT_Utf8_info
+                                           representing name of attribute
+      (attribute_length) 0x00 00 00 0A (10): len(attribute) (excl. prev. 6bytes)
+      (line_number_table_length) 0x0002 (2): len(line_number_table)
+      (line_number_table[]) 0x00 00 00 03 00 08 00 04:
+        (start_pc) 0x0000 (0): index into code array where nl in source begins
+        (line_number) 0x0003 (3): line number of original source file
+        (start_pc) 0x0008 (8): index into code array where nl in source begins
+        (line_number) 0x0004 (4): line number of original source file
+
+// END OF METHODS
+
+(attributes_count) 0x0001 (1): len(attributes)
+(attributes[]) 0x00 0D 00 00 00 02 00 0E:
+  (attribute_name_index) 0x000D (13): CP[13] must be CONSTANT_Utf8_info
+                                      representing name of attribute
+  (attribute_length) 0x00 00 00 02 (2): len(attribute) (excl. prev. 6 bytes)
+  (source_file_index) 0x000E (14): CP[14] must be CONSTANT_Utf8_info
+                                   representing a string
