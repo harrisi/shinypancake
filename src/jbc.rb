@@ -42,6 +42,15 @@ class ClassFile
     @constant_pool_count = cpc[-1]
     true
   end
+  def read_file
+    Enumerator.new do |foo|
+      foo << read_magic
+      foo << read_minor_version
+      foo << read_major_version
+      foo << read_constant_pool_count
+    end
+  end
+  attr_reader :cf_enum
 end
 
 cf = ClassFile.new("../resources/Foo.class")
@@ -58,3 +67,9 @@ end
 if (cf.read_constant_pool_count)
   puts "read constant_pool_count"
 end
+
+cf.cf_enum.rewind
+
+cf.read_file.each_with_index {
+  |f, i| puts "done #{i}: #{f}"
+}
