@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+require 'digest'
+require 'bindata'
+
 $CONSTANT_Class = 7;
 $CONSTANT_Fieldref = 9;
 $CONSTANT_Methodref = 10;
@@ -160,19 +163,23 @@ class ClassFile
 
   def initialize(cf)
     @class_file = File.new(cf)
+    @class_file_string = @class_file.read
+    @class_file.rewind
     @cf_enum = @class_file.each_byte
     @constant_pool = []
     @interfaces = []
     @fields = []
     @methods = []
     @attributes = []
+    @access_flags = []
   end
   
   def read_magic
-    cafebabe = Array.new(4) {@cf_enum.next}
+    # cafebabe = Array.new(4) {@cf_enum.next}
+    cafebabe = @class_file.read(4)
     @magic = cafebabe
-    puts "Magic: #{@magic}"
-    @magic == [0xca, 0xfe, 0xba, 0xbe]
+    #@magic == [0xca, 0xfe, 0xba, 0xbe]
+    true
   end
   
   def read_minor_version
@@ -182,7 +189,6 @@ class ClassFile
     @minor_version = minor[-1]
     # I don't know the best way to deal with this, but for now it's nice for
     # debugging, I guess.
-    puts "Minor version: #{@minor_version}"
     true
   end
   
@@ -192,7 +198,6 @@ class ClassFile
     # than 255 seems more realistic though.
     @major_version = major[-1]
     # Again, with above.
-    puts "Major version: #{@major_version}"
     true
   end
   
@@ -205,7 +210,6 @@ class ClassFile
     # both octets to binary strings, smash them together, and then convert the
     # bit string to an integer.
     @constant_pool_count = cpc[-1]
-    puts "Constant pool count: #{@constant_pool_count}"
     true
   end
 
@@ -215,80 +219,66 @@ class ClassFile
       tag = @cf_enum.next
       case tag # read byte (tag)
       when $CONSTANT_Class
-        # puts "CONSTANT_Class"
         temp = CONSTANT_Class_info.new
         temp.name_index = Array.new(2) { @cf_enum.next}
         @constant_pool << temp
       when $CONSTANT_Fieldref
-        # puts "CONSTANT_Fieldref"
         temp = CONSTANT_Fieldref_info.new
         temp.class_index = Array.new(2) { @cf_enum.next }
         temp.name_and_type_index = Array.new(2) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_Methodref then
-        # puts "CONSTANT_Methodref"
         temp = CONSTANT_Methodref_info.new
         temp.class_index = Array.new(2) { @cf_enum.next }
         temp.name_and_type_index = Array.new(2) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_InterfaceMethodref
-        # puts "CONSTANT_InterfaceMethodref"
         temp = CONSTANT_InterfaceMethodref_info.new
         temp.class_index = Array.new(2) { @cf_enum.next }
         temp.name_and_type_index = Array.new(2) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_String
-        # puts "CONSTANT_String"
         temp = CONSTANT_String_info.new
         temp.string_index = Array.new(2) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_Integer
-        # puts "CONSTANT_Integer"
         temp = CONSTANT_Integer_info.new
         temp.bytes = Array.new(4) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_Float
-        # puts "CONSTANT_Float"
         temp = CONSTANT_Float_info.new
         temp.bytes = Array.new(4) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_LONG
-        # puts "CONSTANT_LONG"
         temp = CONSTANT_Long_info.new
         temp.high_bytes = Array.new(4) { @cf_enum.next }
         temp.low_bytes = Array.new(4) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_Double
-        # puts "CONSTANT_Double"
         temp = CONSTANT_Double_info.new
         temp.high_bytes = Array.new(4) { @cf_enum.next }
         temp.low_bytes = Array.new(4) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_NameAndType
-        # puts "CONSTANT_NameAndType"
         temp = CONSTANT_NameAndType_info.new
         temp.name_index = Array.new(2) { @cf_enum.next }
         temp.descriptor_index = Array.new(2) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_Utf8
-        # puts "CONSTANT_Utf8"
         temp = CONSTANT_Utf8_info.new
         temp.length = Array.new(2) { @cf_enum.next }
         temp.bytes = Array.new(temp.length[-1]) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_MethodHandle
-        # puts "CONSTANT_MethodHandle"
         temp = CONSTANT_MethodHandle_info.new
         temp.reference_kind = Array.new(1) { @cf_enum.next }
         temp.reference_index = Array.new(2) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_MethodType
-        # puts "CONSTANT_MethodType"
         temp = CONSTANT_MethodType_info.new
         temp.descriptor_index = Array.new(2) { @cf_enum.next }
         @constant_pool << temp
       when $CONSTANT_InvokeDynamic
-        # puts "CONSTANT_InvokeDynamic"
         temp = CONSTANT_InvokeDynamic_info.new
         temp.bootstrap_method_attr_index = Array.new(2) { @cf_enum.next }
         temp.name_and_type_index = Array.new(2) { @cf_enum.next }
@@ -340,48 +330,96 @@ class ClassFile
       foo << read_major_version
       foo << read_constant_pool_count
       foo << read_constant_pool
-      foo << read_access_flags
+      foo << get_access_flags
       foo << read_this_class
       foo << read_super_class
       foo << read_interfaces_count
       foo << read_interfaces
     end
   end
+
+  def get_orig_file
+    res_index = 0
+    @constant_pool.each_with_index do
+      |item, index|
+      if item.tag == $CONSTANT_Utf8
+        if item.bytes.pack("C*") == "SourceFile" # Does c vs C matter?
+          res_index = index + 1
+          break
+        end
+      end
+    end
+    @constant_pool[res_index].bytes.pack("C*")
+  end
+
+  def get_access_flags
+    cf = Array.new(2) { @cf_enum.next }
+    res = BinData::Int16be.read(cf.pack("C*"))
+    # accessors = []
+    unless res & 0x0001 == 0
+      @access_flags << "ACC_PUBLIC"
+    end
+    unless res & 0x0010 == 0
+      @access_flags << "ACC_FINAL"
+    end
+    unless res & 0x0020 == 0
+      @access_flags << "ACC_SUPER"
+    end
+    unless res & 0x0200 == 0
+      @access_flags << "ACC_INTERFACE"
+    end
+    unless res & 0x0400 == 0
+      @access_flags << "ACC_ABSTRACT"
+    end
+    unless res & 0x1000 == 0
+      @access_flags << "ACC_SYNTHETIC"
+    end
+    unless res & 0x2000 == 0
+      @access_flags << "ACC_ANOTATION"
+    end
+    unless res & 0x4000 == 0
+      @access_flags << "ACC_ENUM"
+    end
+    true
+  end
+
   attr_reader :cf_enum
+  attr_reader :class_file
+  attr_reader :class_file_string
 end
 
 cf = ClassFile.new("../resources/Foo.class")
 
-# if (cf.read_magic)
-#   puts "read_magic"
-# end
-# if (cf.read_minor_version)
-#   puts "read minor_version"
-# end
-# if (cf.read_major_version)
-#   puts "read major_version"
-# end
-# if (cf.read_constant_pool_count)
-#   puts "read constant_pool_count"
-# end
-# 
-# cf.cf_enum.rewind
+cf.class_file.rewind
 
 cf.read_file.each_with_index {
-  |f, i| puts "done #{i}: #{f}"
+  |f, i| 
+  unless f
+    puts "ERROR READING FILE~!~!~!!~ (#{i})"
+  end
 }
 
-puts "MAGIC: #{cf.magic}"
-puts "MINOR_VERSION: #{cf.minor_version}"
-puts "MAJOR_VERSION: #{cf.major_version}"
-puts "CONSTANT_POOL_COUNT: #{cf.constant_pool_count}"
-puts "CONSTANT_POOL:"
+puts "Classfile #{File.absolute_path(cf.class_file)}"
+puts "  Last modified #{cf.class_file.mtime}; size #{cf.class_file.size}"
+puts "  MD5 checksum #{Digest::MD5.new << cf.class_file.read}"
+puts "  Compiled from \"#{cf.get_orig_file}\""
+puts "class #{cf.this_class}"
+puts "  minor version: #{cf.minor_version}"
+puts "  major version: #{cf.major_version}"
+puts "  flags: #{cf.access_flags}"
+puts "Constant pool:"
+
+# puts "MAGIC: #{cf.magic}"
+# puts "MINOR_VERSION: #{cf.minor_version}"
+# puts "MAJOR_VERSION: #{cf.major_version}"
+# puts "CONSTANT_POOL_COUNT: #{cf.constant_pool_count}"
+# puts "CONSTANT_POOL:"
 cf.constant_pool.each_with_index do
   |cp_info, index|
   puts "\tCP[#{index + 1}]: #{cp_info.tag}"
 end
-puts "ACCESS_FLAGS: #{cf.access_flags}"
-puts "THIS_CLASS: #{cf.this_class}"
-puts "SUPER_CLASS: #{cf.super_class}"
-puts "INTERFACES_COUNT: #{cf.interfaces_count}"
-puts "INTERFACES: #{cf.interfaces}"
+# puts "ACCESS_FLAGS: #{cf.access_flags}"
+# puts "THIS_CLASS: #{cf.this_class}"
+# puts "SUPER_CLASS: #{cf.super_class}"
+# puts "INTERFACES_COUNT: #{cf.interfaces_count}"
+# puts "INTERFACES: #{cf.interfaces}"
