@@ -4,7 +4,7 @@ class file parser and `javap` clone.
 
 # How to Use
 Currently this just is a hard-coded test program, essentially. It reads in the
-file at [resources/Foo.class]() and parses it, outputting some information about
+file at [resources/Foo.class](resources/Foo.class) and parses it, outputting some information about
 the file. Currently the output isn't very useful, but it will eventually
 (ideally) be nearly identical to the output of running `javap -c -verbose
 *.class`.
