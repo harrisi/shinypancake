@@ -3,20 +3,20 @@
 require 'bindata'
 require 'pp'
 
-$_constant_class = 7
-$_constant_fieldref = 9
-$_constant_methodref = 10
-$_constant_interfacemethodref = 11
-$_constant_string = 8
-$_constant_integer = 3
-$_constant_float = 4
-$_constant_long = 5
-$_constant_double = 6
-$_constant_nameandtype = 12
-$_constant_utf8 = 1
-$_constant_methodhandle = 15
-$_constant_methodtype = 16
-$_constant_invokedynamic = 18
+CONSTANT_Class = 7
+CONSTANT_Fieldref = 9
+CONSTANT_Methodref = 10
+CONSTANT_InterfaceMethodref = 11
+CONSTANT_String = 8
+CONSTANT_Integer = 3
+CONSTANT_Float = 4
+CONSTANT_Long = 5
+CONSTANT_Double = 6
+CONSTANT_NameAndType = 12
+CONSTANT_Utf8 = 1
+CONSTANT_MethodHandle = 15
+CONSTANT_MethodType = 16
+CONSTANT_InvokeDynamic = 18
 
 class ConstantClassInfo < BinData::Record
   uint16be :name_index
@@ -92,20 +92,20 @@ end
 class CPInfo < BinData::Array
   uint8 :tag
   choice :info, :selection => :tag do
-   constant_class_info $_constant_class
-   constant_fieldref_info $_constant_fieldref
-   constant_methodref_info $_constant_methodref
-   constant_interface_methodref_info $_constant_interfacemethodref
-   constant_string_info $_constant_string
-   constant_integer_info $_constant_integer
-   constant_float_info $_constant_float
-   constant_long_info $_constant_long
-   constant_double_info $_constant_double
-   constant_name_and_type_info $_constant_nameandtype
-   constant_utf8_info $_constant_utf8
-   constant_method_handle_info $_constant_methodhandle
-   constant_method_type_info $_constant_methodtype
-   constant_invoke_dynamic_info $_constant_invokedynamic
+   constant_class_info CONSTANT_Class
+   constant_fieldref_info CONSTANT_Fieldref
+   constant_Methodref_info CONSTANT_Methodref
+   constant_interface_Methodref_info CONSTANT_InterfaceMethodref
+   constant_string_info CONSTANT_String
+   constant_integer_info CONSTANT_Integer
+   constant_float_info CONSTANT_Float
+   constant_long_info CONSTANT_Long
+   constant_double_info CONSTANT_Double
+   constant_name_and_type_info CONSTANT_NameAndType
+   constant_utf8_info CONSTANT_Utf8
+   constant_method_handle_info CONSTANT_MethodHandle
+   constant_method_type_info CONSTANT_MethodType
+   constant_invoke_dynamic_info CONSTANT_InvokeDynamic
   end
 end
 
@@ -149,10 +149,6 @@ class ClassFileEx < BinData::Record
   attribute_info :attributes, :initial_length => :attributes_count
 end
 
-def get_name(cf)
-    cf.constant_pool
-end
-
 io = File.open("../resources/Foo.class")
 # BinData::trace_reading do
 #   ClassFileEx.read(io)
@@ -170,4 +166,5 @@ puts "  flags: #{cfex.access_flags}"
 
 puts "magic: 0x%X" % cfex.magic
 puts "attributes: #{cfex.attributes}"
-PP.pp(cfex.constant_pool)
+# PP.pp(cfex.constant_pool)
+PP.pp(cfex.constant_pool[12].info.bytes)
